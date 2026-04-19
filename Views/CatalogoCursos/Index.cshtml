@@ -1,0 +1,84 @@
+@model Practica2.ViewModels.CatalogoCursosFiltroViewModel
+
+@{
+    ViewData["Title"] = "Catalogo de cursos";
+}
+
+<h1 class="mb-4">Catalogo de cursos</h1>
+
+<form method="get" class="row g-3 mb-4">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="col-md-4">
+        <label asp-for="Nombre" class="form-label"></label>
+        <input asp-for="Nombre" class="form-control" placeholder="Ej: Calculo" />
+    </div>
+
+    <div class="col-md-2">
+        <label asp-for="CreditosMin" class="form-label">Creditos min</label>
+        <input asp-for="CreditosMin" class="form-control" type="number" min="0" />
+        <span asp-validation-for="CreditosMin" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-2">
+        <label asp-for="CreditosMax" class="form-label">Creditos max</label>
+        <input asp-for="CreditosMax" class="form-control" type="number" min="0" />
+        <span asp-validation-for="CreditosMax" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-2">
+        <label asp-for="HorarioInicio" class="form-label">Horario inicio</label>
+        <input asp-for="HorarioInicio" class="form-control" type="time" />
+        <span asp-validation-for="HorarioInicio" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-2">
+        <label asp-for="HorarioFin" class="form-label">Horario fin</label>
+        <input asp-for="HorarioFin" class="form-control" type="time" />
+        <span asp-validation-for="HorarioFin" class="text-danger"></span>
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+    </div>
+</form>
+
+@if (!Model.Cursos.Any())
+{
+    <div class="alert alert-info">No se encontraron cursos activos con esos filtros.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Codigo</th>
+                    <th>Nombre</th>
+                    <th>Creditos</th>
+                    <th>Horario</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var curso in Model.Cursos)
+                {
+                    <tr>
+                        <td>@curso.Codigo</td>
+                        <td>@curso.Nombre</td>
+                        <td>@curso.Creditos</td>
+                        <td>@curso.HorarioInicio.ToString("HH:mm") - @curso.HorarioFin.ToString("HH:mm")</td>
+                        <td class="text-end">
+                            <a asp-action="Detalle" asp-route-id="@curso.Id" class="btn btn-sm btn-outline-primary">Ver detalle</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

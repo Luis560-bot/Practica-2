@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Practica2.Models;
 
-public class Curso
+public class Curso : IValidatableObject
 {
     public int Id { get; set; }
 
@@ -14,7 +14,7 @@ public class Curso
     [StringLength(150)]
     public string Nombre { get; set; } = string.Empty;
 
-    [Range(1, int.MaxValue, ErrorMessage = "Los creditos deben ser mayores a 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "No se aceptan creditos negativos.")]
     public int Creditos { get; set; }
 
     [Range(1, int.MaxValue, ErrorMessage = "El cupo maximo debe ser mayor a 0.")]
@@ -27,4 +27,21 @@ public class Curso
     public bool Activo { get; set; }
 
     public ICollection<Matricula> Matriculas { get; set; } = new List<Matricula>();
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (Creditos < 0)
+        {
+            yield return new ValidationResult(
+                "No se aceptan creditos negativos.",
+                new[] { nameof(Creditos) });
+        }
+
+        if (HorarioFin < HorarioInicio)
+        {
+            yield return new ValidationResult(
+                "No se permite HorarioFin anterior a HorarioInicio.",
+                new[] { nameof(HorarioInicio), nameof(HorarioFin) });
+        }
+    }
 }
