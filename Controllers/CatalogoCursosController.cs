@@ -120,7 +120,30 @@ public class CatalogoCursosController : Controller
             return Challenge();
         }
 
+        var matriculaExistente = await _context.Matriculas
+            .AsNoTracking()
+            .Where(m =>
+                m.UsuarioId == userId &&
+                m.Estado != EstadoMatricula.Cancelada &&
+                m.CursoId != id)
+            .Join(
+                _context.Cursos.AsNoTracking(),
+                matricula => matricula.CursoId,
+                cursoExistente => cursoExistente.Id,
+                (_, cursoExistente) => cursoExistente)
+            .FirstOrDefaultAsync(cursoExistente =>
+                cursoExistente.HorarioInicio < curso.HorarioFin &&
+                curso.HorarioInicio < cursoExistente.HorarioFin);
+
+        if (matriculaExistente is not null)
+        {
+            TempData["ErrorInscripcion"] =
+                $"No puedes inscribirte porque el horario se solapa con el curso {matriculaExistente.Codigo}.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
         var yaInscrito = await _context.Matriculas
+            .AsNoTracking()
             .AnyAsync(m =>
                 m.CursoId == id &&
                 m.UsuarioId == userId &&

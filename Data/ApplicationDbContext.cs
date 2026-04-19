@@ -51,12 +51,14 @@ public class ApplicationDbContext : IdentityDbContext
     public override int SaveChanges()
     {
         ValidarCupos();
+        ValidarSolapamientos();
         return base.SaveChanges();
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         ValidarCupos();
+        ValidarSolapamientos();
         return base.SaveChangesAsync(cancellationToken);
     }
 
@@ -83,6 +85,45 @@ public class ApplicationDbContext : IdentityDbContext
             if (totalVigentes >= curso.CupoMaximo)
             {
                 throw new InvalidOperationException($"No hay cupos disponibles para el curso {curso.Codigo}.");
+            }
+        }
+    }
+
+    private void ValidarSolapamientos()
+    {
+        var nuevasMatriculas = ChangeTracker
+            .Entries<Matricula>()
+            .Where(e => e.State == EntityState.Added)
+            .Select(e => e.Entity)
+            .ToList();
+
+        foreach (var matricula in nuevasMatriculas)
+        {
+            var cursoNuevo = Cursos.AsNoTracking().FirstOrDefault(c => c.Id == matricula.CursoId);
+            if (cursoNuevo is null)
+            {
+                continue;
+            }
+
+            var cursoConflicto = Matriculas
+                .AsNoTracking()
+                .Where(m =>
+                    m.UsuarioId == matricula.UsuarioId &&
+                    m.Estado != EstadoMatricula.Cancelada &&
+                    m.CursoId != matricula.CursoId)
+                .Join(
+                    Cursos.AsNoTracking(),
+                    matriculaExistente => matriculaExistente.CursoId,
+                    cursoExistente => cursoExistente.Id,
+                    (_, cursoExistente) => cursoExistente)
+                .FirstOrDefault(cursoExistente =>
+                    cursoExistente.HorarioInicio < cursoNuevo.HorarioFin &&
+                    cursoNuevo.HorarioInicio < cursoExistente.HorarioFin);
+
+            if (cursoConflicto is not null)
+            {
+                throw new InvalidOperationException(
+                    $"No se puede matricular en {cursoNuevo.Codigo} porque se solapa con el curso {cursoConflicto.Codigo}.");
             }
         }
     }
