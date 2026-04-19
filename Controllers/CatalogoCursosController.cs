@@ -1,32 +1,44 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.EntityFrameworkCore;
 using Practica2.Data;
+using Practica2.Infrastructure;
 using Practica2.Models;
 using Practica2.ViewModels;
+using System.Text.Json;
 
 namespace Practica2.Controllers;
 
 public class CatalogoCursosController : Controller
 {
+    private static readonly DistributedCacheEntryOptions CursosActivosCacheOptions = new()
+    {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60)
+    };
+
     private readonly ApplicationDbContext _context;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly IDistributedCache _cache;
 
-    public CatalogoCursosController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+    public CatalogoCursosController(
+        ApplicationDbContext context,
+        UserManager<IdentityUser> userManager,
+        IDistributedCache cache)
     {
         _context = context;
         _userManager = userManager;
+        _cache = cache;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index([FromQuery] CatalogoCursosFiltroViewModel filtros)
     {
-        var query = _context.Cursos
-            .AsNoTracking()
-            .Where(c => c.Activo)
-            .OrderBy(c => c.Nombre)
-            .AsQueryable();
+        var cursosActivos = await ObtenerCursosActivosCacheadosAsync();
+
+        var query = cursosActivos.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(filtros.Nombre))
         {
@@ -54,7 +66,7 @@ public class CatalogoCursosController : Controller
             query = query.Where(c => c.HorarioFin <= filtros.HorarioFin.Value);
         }
 
-        filtros.Cursos = await query.ToListAsync();
+        filtros.Cursos = query.ToList();
         return View(filtros);
     }
 
@@ -69,6 +81,9 @@ public class CatalogoCursosController : Controller
         {
             return NotFound();
         }
+
+        HttpContext.Session.SetInt32(AppStateKeys.UltimoCursoIdSessionKey, curso.Id);
+        HttpContext.Session.SetString(AppStateKeys.UltimoCursoNombreSessionKey, curso.Nombre);
 
         var yaInscrito = false;
 
@@ -98,6 +113,30 @@ public class CatalogoCursosController : Controller
         };
 
         return View(model);
+    }
+
+    private async Task<List<Curso>> ObtenerCursosActivosCacheadosAsync()
+    {
+        var cursosCacheados = await _cache.GetStringAsync(AppStateKeys.CursosActivosCacheKey);
+        if (!string.IsNullOrWhiteSpace(cursosCacheados))
+        {
+            var cursosDesdeCache = JsonSerializer.Deserialize<List<Curso>>(cursosCacheados);
+            if (cursosDesdeCache is not null)
+            {
+                return cursosDesdeCache;
+            }
+        }
+
+        var cursosActivos = await _context.Cursos
+            .AsNoTracking()
+            .Where(c => c.Activo)
+            .OrderBy(c => c.Nombre)
+            .ToListAsync();
+
+        var serializado = JsonSerializer.Serialize(cursosActivos);
+        await _cache.SetStringAsync(AppStateKeys.CursosActivosCacheKey, serializado, CursosActivosCacheOptions);
+
+        return cursosActivos;
     }
 
     [HttpPost]

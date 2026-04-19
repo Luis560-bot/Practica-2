@@ -1,0 +1,57 @@
+@model Practica2.ViewModels.CursoCoordinadorFormViewModel
+
+@{
+    ViewData["Title"] = "Editar curso";
+}
+
+<h1 class="mb-4">Editar curso</h1>
+
+<form asp-action="EditarCurso" method="post" class="row g-3">
+    <input asp-for="Id" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="col-md-4">
+        <label asp-for="Codigo" class="form-label"></label>
+        <input asp-for="Codigo" class="form-control" />
+        <span asp-validation-for="Codigo" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-8">
+        <label asp-for="Nombre" class="form-label"></label>
+        <input asp-for="Nombre" class="form-control" />
+        <span asp-validation-for="Nombre" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-2">
+        <label asp-for="Creditos" class="form-label"></label>
+        <input asp-for="Creditos" class="form-control" type="number" min="0" />
+        <span asp-validation-for="Creditos" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-2">
+        <label asp-for="CupoMaximo" class="form-label">Cupo maximo</label>
+        <input asp-for="CupoMaximo" class="form-control" type="number" min="1" />
+        <span asp-validation-for="CupoMaximo" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-2">
+        <label asp-for="HorarioInicio" class="form-label">Horario inicio</label>
+        <input asp-for="HorarioInicio" class="form-control" type="time" />
+        <span asp-validation-for="HorarioInicio" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-2">
+        <label asp-for="HorarioFin" class="form-label">Horario fin</label>
+        <input asp-for="HorarioFin" class="form-control" type="time" />
+        <span asp-validation-for="HorarioFin" class="text-danger"></span>
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

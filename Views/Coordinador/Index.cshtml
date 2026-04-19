@@ -1,0 +1,75 @@
+@model Practica2.ViewModels.PanelCoordinadorViewModel
+
+@{
+    ViewData["Title"] = "Panel de Coordinador";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Panel de Coordinador</h1>
+    <a asp-action="CrearCurso" class="btn btn-primary">Crear curso</a>
+</div>
+
+@if (TempData["ExitoCoordinador"] is string exito)
+{
+    <div class="alert alert-success">@exito</div>
+}
+
+@if (!Model.Cursos.Any())
+{
+    <div class="alert alert-info">No hay cursos registrados.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Codigo</th>
+                    <th>Nombre</th>
+                    <th>Creditos</th>
+                    <th>Cupo</th>
+                    <th>Horario</th>
+                    <th>Estado</th>
+                    <th>Matriculas vigentes</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var curso in Model.Cursos)
+                {
+                    <tr>
+                        <td>@curso.Codigo</td>
+                        <td>@curso.Nombre</td>
+                        <td>@curso.Creditos</td>
+                        <td>@curso.CupoMaximo</td>
+                        <td>@curso.HorarioInicio.ToString("HH:mm") - @curso.HorarioFin.ToString("HH:mm")</td>
+                        <td>
+                            @if (curso.Activo)
+                            {
+                                <span class="badge text-bg-success">Activo</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Desactivado</span>
+                            }
+                        </td>
+                        <td>@curso.TotalMatriculasVigentes</td>
+                        <td class="text-end">
+                            <div class="d-flex gap-2 justify-content-end flex-wrap">
+                                <a asp-action="EditarCurso" asp-route-id="@curso.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                                <a asp-action="MatriculasCurso" asp-route-cursoId="@curso.Id" class="btn btn-sm btn-outline-info">Matriculas</a>
+                                @if (curso.Activo)
+                                {
+                                    <form asp-action="DesactivarCurso" method="post">
+                                        <input type="hidden" name="id" value="@curso.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Desactivar</button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
