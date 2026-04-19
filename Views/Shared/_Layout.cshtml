@@ -29,6 +29,22 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="CatalogoCursos" asp-action="Index">Catalogo de cursos</a>
                         </li>
+                        @{
+                            var ultimoCursoId = Context.Session.GetInt32(AppStateKeys.UltimoCursoIdSessionKey);
+                            var ultimoCursoNombre = Context.Session.GetString(AppStateKeys.UltimoCursoNombreSessionKey);
+                        }
+                        @if (ultimoCursoId.HasValue && !string.IsNullOrWhiteSpace(ultimoCursoNombre))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="CatalogoCursos" asp-action="Detalle" asp-route-id="@ultimoCursoId.Value">Volver al curso @ultimoCursoNombre</a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Coordinador"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Coordinador" asp-action="Index">Panel coordinador</a>
+                            </li>
+                        }
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>

@@ -1,0 +1,78 @@
+@using Practica2.Models
+@model Practica2.ViewModels.MatriculasCursoCoordinadorViewModel
+
+@{
+    ViewData["Title"] = "Matriculas por curso";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Matriculas de @Model.CursoCodigo - @Model.CursoNombre</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">Volver al panel</a>
+</div>
+
+@if (TempData["ExitoCoordinador"] is string exito)
+{
+    <div class="alert alert-success">@exito</div>
+}
+
+@if (!Model.Matriculas.Any())
+{
+    <div class="alert alert-info">Este curso no tiene matriculas registradas.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Fecha registro</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Matriculas)
+                {
+                    <tr>
+                        <td>@item.UsuarioEmail</td>
+                        <td>@item.FechaRegistro.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            @if (item.Estado == EstadoMatricula.Confirmada)
+                            {
+                                <span class="badge text-bg-success">Confirmada</span>
+                            }
+                            else if (item.Estado == EstadoMatricula.Cancelada)
+                            {
+                                <span class="badge text-bg-danger">Cancelada</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-warning">Pendiente</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex gap-2 justify-content-end flex-wrap">
+                                @if (item.Estado != EstadoMatricula.Confirmada)
+                                {
+                                    <form asp-action="ConfirmarMatricula" method="post">
+                                        <input type="hidden" name="id" value="@item.MatriculaId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success">Confirmar</button>
+                                    </form>
+                                }
+
+                                @if (item.Estado != EstadoMatricula.Cancelada)
+                                {
+                                    <form asp-action="CancelarMatricula" method="post">
+                                        <input type="hidden" name="id" value="@item.MatriculaId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Cancelar</button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
